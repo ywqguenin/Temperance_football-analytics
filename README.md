@@ -20,7 +20,7 @@ The goal is to allow users to ask football-related analytical questions in natur
 
 ## Why do I have the idea to build the project?
 
-I am a big fan of football and I am also a student who major in computer science with artificial intelligence. I am always looking for a way to do a big project about the football. And with the surgence? of AI, I wondered whether it is possible to connect the football game with AI agents.
+I am a big fan of football and I am also a student who major in computer science with artificial intelligence. I am always looking for a way to do a big project about the football. And With the rapid boom and emergence of AI, I wondered whether it is possible to connect the football game with AI agents.
 
 ## Current Goal
 
