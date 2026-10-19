@@ -2,7 +2,38 @@ import math
 import pandas as pd
 
 
+def _validate_columns(events, required_columns):
+    missing = [
+        column
+        for column in required_columns
+        if column not in events.columns
+    ]
+
+    if missing:
+        raise ValueError(
+            f"Missing required columns: {missing}"
+        )
+
+
+def _validate_team(events, team):
+    _validate_columns(events, ["team"])
+
+    available_teams = events["team"].dropna().unique()
+
+    if team not in available_teams:
+        raise ValueError(
+            f"Team '{team}' not found. "
+            f"Available teams: {list(available_teams)}"
+        )
+
+
 def get_team_shots(events, team):
+    _validate_columns(
+        events,
+        ["type", "team", "shot_statsbomb_xg"]
+    )
+    _validate_team(events, team)
+
     return events[
         (events["type"] == "Shot") &
         (events["team"] == team)
@@ -10,6 +41,12 @@ def get_team_shots(events, team):
 
 
 def get_team_passes(events, team):
+    _validate_columns(
+        events,
+        ["type", "team", "pass_outcome"]
+    )
+    _validate_team(events, team)
+
     return events[
         (events["type"] == "Pass") &
         (events["team"] == team)
@@ -17,6 +54,20 @@ def get_team_passes(events, team):
 
 
 def get_final_third_entries(events, team):
+
+    _validate_columns(
+        events,
+        [
+            "type",
+            "team",
+            "pass_outcome",
+            "location",
+            "pass_end_location"
+        ]
+    )
+
+    _validate_team(events, team)
+
     passes = events[
         (events["type"] == "Pass") &
         (events["team"] == team) &
@@ -38,6 +89,20 @@ def get_final_third_entries(events, team):
 
 
 def get_progressive_passes(events, team, min_progress=10):
+
+    _validate_columns(
+        events,
+        [
+            "type",
+            "team",
+            "pass_outcome",
+            "location",
+            "pass_end_location"
+        ]
+    )
+
+    _validate_team(events, team)
+
     passes = events[
         (events["type"] == "Pass") &
         (events["team"] == team) &
@@ -79,14 +144,20 @@ def build_team_summary(events, team):
     return {
         "team": team,
         "shots": len(shots),
-        "total_xg": round(shots["shot_statsbomb_xg"].sum(), 3),
-        "average_xg_per_shot": round(
-            shots["shot_statsbomb_xg"].mean(), 3
+        "total_xg": float(
+            round(shots["shot_statsbomb_xg"].sum(), 3)
+        ),
+        "average_xg_per_shot": (
+            float(round(shots["shot_statsbomb_xg"].mean(), 3))
+            if len(shots) > 0
+            else 0.0
         ),
         "passes": len(passes),
         "completed_passes": int(completed_passes),
-        "pass_completion_rate": round(
-            completed_passes / len(passes) * 100, 2
+        "pass_completion_rate": (
+            float(round(completed_passes / len(passes) * 100, 2))
+            if len(passes) > 0
+            else 0.0
         ),
         "final_third_entries": len(entries),
         "progressive_passes": len(progressive)
