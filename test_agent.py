@@ -1,33 +1,36 @@
-from statsbombpy import sb
-
-from src.agent import (
-    select_tools,
-    execute_tools
-)
+from src.agent import run_agent
+from src.data_loader import load_match_events
 
 
-match_id = 3754296
-events = sb.events(match_id=match_id)
+def main():
+    match_id = 3754296
+
+    # Load match data from local cache.
+    # If the cache does not exist, it will download from StatsBomb
+    # and save the data locally.
+    events = load_match_events(match_id)
+
+    question = (
+        "Which team had the stronger overall attacking "
+        "and passing performance?"
+    )
+
+    result = run_agent(
+        events,
+        question
+    )
+
+    print("\n--- AGENT PLAN ---")
+    print("Tools:", result["decision"].tools)
+    print("Teams:", result["decision"].teams)
+    print("Reason:", result["decision"].reason)
+
+    print("\n--- EVIDENCE ---")
+    print(result["evidence"])
+
+    print("\n--- FINAL ANSWER ---")
+    print(result["answer"])
 
 
-question = (
-    "Why did Arsenal create fewer shots but still produce "
-    "higher total xG than Manchester City?"
-)
-
-
-decision = select_tools(question)
-
-print("\n--- AGENT PLAN ---")
-print("Tools:", decision.tools)
-print("Teams:", decision.teams)
-print("Reason:", decision.reason)
-
-
-evidence = execute_tools(
-    events,
-    decision
-)
-
-print("\n--- EVIDENCE ---")
-print(evidence)
+if __name__ == "__main__":
+    main()
