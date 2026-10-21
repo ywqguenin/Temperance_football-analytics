@@ -1,18 +1,52 @@
 from src.agent import run_agent
-from src.data_loader import load_match_events
+from src.data_loader import (
+    load_matches,
+    get_match_options,
+    load_match_events,
+)
 
 
 def main():
-    match_id = 3754296
+    competition_id = 2
+    season_id = 27
 
-    # Load match data from local cache.
-    # If the cache does not exist, it will download from StatsBomb
-    # and save the data locally.
-    events = load_match_events(match_id)
+    matches = load_matches(
+        competition_id,
+        season_id
+    )
 
-    question = (
-        "Which team had the stronger overall attacking "
-        "and passing performance?"
+    options = get_match_options(matches)
+
+    print("\n--- AVAILABLE MATCHES ---")
+    print(
+        options.head(20).to_string(index=False)
+    )
+
+    selected_match_id = int(
+        input("\nEnter match ID: ")
+    )
+
+    selected_match = options[
+        options["match_id"] == selected_match_id
+    ]
+
+    if selected_match.empty:
+        raise ValueError(
+            f"Match {selected_match_id} not found "
+            f"in competition {competition_id}, season {season_id}."
+        )
+
+    print("\n--- SELECTED MATCH ---")
+    print(
+        selected_match.to_string(index=False)
+    )
+
+    events = load_match_events(
+        selected_match_id
+    )
+
+    question = input(
+        "\nAsk a football question: "
     )
 
     result = run_agent(
