@@ -1,0 +1,5 @@
+pandas
+statsbombpy
+ollama
+pydantic
+pytest
