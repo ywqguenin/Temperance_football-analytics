@@ -1,88 +1,138 @@
+
+import pandas as pd
+
 from src.agent import execute_tools, ToolDecision
-from src.data_loader import load_match_events
 
 
-MATCH_ID = 3754296
+def make_test_events():
+    """Create deterministic event data for testing the agent."""
+
+    return pd.DataFrame([
+        # Team A: two shots and two passes
+        {
+            "type": "Shot",
+            "team": "Team A",
+            "shot_statsbomb_xg": 0.4,
+            "pass_outcome": None,
+            "location": [80, 40],
+            "pass_end_location": [100, 40],
+        },
+        {
+            "type": "Shot",
+            "team": "Team A",
+            "shot_statsbomb_xg": 0.2,
+            "pass_outcome": None,
+            "location": [90, 30],
+            "pass_end_location": [100, 40],
+        },
+        {
+            "type": "Pass",
+            "team": "Team A",
+            "shot_statsbomb_xg": None,
+            "pass_outcome": None,
+            "location": [60, 40],
+            "pass_end_location": [90, 40],
+        },
+        {
+            "type": "Pass",
+            "team": "Team A",
+            "shot_statsbomb_xg": None,
+            "pass_outcome": "Incomplete",
+            "location": [50, 30],
+            "pass_end_location": [55, 30],
+        },
+
+        # Team B: one shot and one completed pass
+        {
+            "type": "Shot",
+            "team": "Team B",
+            "shot_statsbomb_xg": 0.1,
+            "pass_outcome": None,
+            "location": [100, 40],
+            "pass_end_location": [110, 40],
+        },
+        {
+            "type": "Pass",
+            "team": "Team B",
+            "shot_statsbomb_xg": None,
+            "pass_outcome": None,
+            "location": [50, 40],
+            "pass_end_location": [65, 40],
+        },
+    ])
+
+
+def make_decision(tool):
+    return ToolDecision(
+        tools=[tool],
+        teams=["Team A", "Team B"],
+        reason="Unit test."
+    )
 
 
 def test_execute_shot_analysis():
-    events = load_match_events(MATCH_ID)
-
-    decision = ToolDecision(
-        tools=["shot_analysis"],
-        teams=["Arsenal", "Manchester City"],
-        reason="Test shot analysis."
-    )
+    events = make_test_events()
 
     evidence = execute_tools(
         events,
-        decision
+        make_decision("shot_analysis")
     )
 
-    assert evidence["shot_analysis"]["Arsenal"]["shots"] == 8
-    assert evidence["shot_analysis"]["Manchester City"]["shots"] == 19
+    assert set(evidence["shot_analysis"]) == {"Team A", "Team B"}
 
-    assert evidence["shot_analysis"]["Arsenal"]["total_xg"] == 1.354
-    assert evidence["shot_analysis"]["Manchester City"]["total_xg"] == 1.25
+    assert evidence["shot_analysis"]["Team A"]["shots"] == 2
+    assert evidence["shot_analysis"]["Team A"]["total_xg"] == 0.6
+    assert evidence["shot_analysis"]["Team B"]["shots"] == 1
+    assert evidence["shot_analysis"]["Team B"]["total_xg"] == 0.1
 
 
 def test_execute_final_third_entries():
-    events = load_match_events(MATCH_ID)
-
-    decision = ToolDecision(
-        tools=["final_third_entries"],
-        teams=["Arsenal", "Manchester City"],
-        reason="Test final third entries."
-    )
+    events = make_test_events()
 
     evidence = execute_tools(
         events,
-        decision
+        make_decision("final_third_entries")
     )
 
-    assert evidence["final_third_entries"]["Arsenal"] == 29
-    assert evidence["final_third_entries"]["Manchester City"] == 39
+    assert evidence["final_third_entries"]["Team A"] == 1
+    assert evidence["final_third_entries"]["Team B"] == 0
 
 
 def test_execute_progressive_passes():
-    events = load_match_events(MATCH_ID)
-
-    decision = ToolDecision(
-        tools=["progressive_passes"],
-        teams=["Arsenal", "Manchester City"],
-        reason="Test progressive passes."
-    )
+    events = make_test_events()
 
     evidence = execute_tools(
         events,
-        decision
+        make_decision("progressive_passes")
     )
 
-    assert evidence["progressive_passes"]["Arsenal"] == 85
-    assert evidence["progressive_passes"]["Manchester City"] == 123
+    assert evidence["progressive_passes"]["Team A"] == 1
+    assert evidence["progressive_passes"]["Team B"] == 1
 
 
 def test_execute_team_summary():
-    events = load_match_events(MATCH_ID)
-
-    decision = ToolDecision(
-        tools=["team_summary"],
-        teams=["Arsenal", "Manchester City"],
-        reason="Test team summary."
-    )
+    events = make_test_events()
 
     evidence = execute_tools(
         events,
-        decision
+        make_decision("team_summary")
     )
 
-    arsenal = evidence["team_summary"]["Arsenal"]
-    city = evidence["team_summary"]["Manchester City"]
+    team_a = evidence["team_summary"]["Team A"]
+    team_b = evidence["team_summary"]["Team B"]
 
-    assert arsenal["shots"] == 8
-    assert arsenal["total_xg"] == 1.354
-    assert arsenal["final_third_entries"] == 29
+    assert team_a["shots"] == 2
+    assert team_a["total_xg"] == 0.6
+    assert team_a["passes"] == 2
+    assert team_a["completed_passes"] == 1
+    assert team_a["pass_completion_rate"] == 50.0
+    assert team_a["final_third_entries"] == 1
+    assert team_a["progressive_passes"] == 1
 
-    assert city["shots"] == 19
-    assert city["total_xg"] == 1.25
-    assert city["final_third_entries"] == 39
+    assert team_b["shots"] == 1
+    assert team_b["total_xg"] == 0.1
+    assert team_b["passes"] == 1
+    assert team_b["completed_passes"] == 1
+    assert team_b["pass_completion_rate"] == 100.0
+    assert team_b["final_third_entries"] == 0
+    assert team_b["progressive_passes"] == 1
