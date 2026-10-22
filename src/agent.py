@@ -133,6 +133,39 @@ User question:
     )
 
 
+def validate_decision(
+    decision: ToolDecision,
+    available_teams: list[str]
+) -> None:
+    """Validate an LLM-generated tool decision before execution."""
+
+    if not decision.tools:
+        raise ValueError(
+            "Invalid agent decision: no analytical tools selected."
+        )
+
+    if not decision.teams:
+        raise ValueError(
+            "Invalid agent decision: no teams selected."
+        )
+
+    invalid_teams = [
+        team for team in decision.teams
+        if team not in available_teams
+    ]
+
+    if invalid_teams:
+        raise ValueError(
+            f"Invalid team selection: {invalid_teams}. "
+            f"Available teams: {available_teams}"
+        )
+
+    if len(decision.teams) != len(set(decision.teams)):
+        raise ValueError(
+            "Invalid agent decision: duplicate teams selected."
+        )
+
+
 def generate_answer(question: str, evidence: dict) -> str:
     prompt = f"""
 You are the interpretation component of a football analytics AI agent.
@@ -205,6 +238,8 @@ def run_agent(events, question: str):
         available_teams
     )
 
+    validate_decision(decision, available_teams)
+
     evidence = execute_tools(
         events,
         decision
@@ -214,6 +249,11 @@ def run_agent(events, question: str):
         question,
         evidence
     )
+
+    if not isinstance(answer, str) or not answer.strip():
+        raise ValueError(
+            "The LLM returned an empty or invalid answer."
+        )
 
     return {
         "decision": decision,
