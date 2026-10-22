@@ -19,7 +19,7 @@ Traditional football statistics scripts require users to know which metric to ca
 - **Evidence-grounded responses:** The LLM interprets computed statistics and is instructed not to invent unsupported match-specific explanations.
 - **Local model inference:** Ollama runs Qwen3:4b locally, avoiding dependence on a paid OpenAI API for the main workflow.
 - **Local data caching:** Match events are saved locally to reduce repeated network requests.
-- **Automated tests:** Eight tests cover analytical edge cases and tool execution.
+- **Automated tests:** 19 tests cover analytical edge cases and tool execution.
 
 ## Architecture
 
@@ -173,7 +173,7 @@ More runnable examples are documented in [`docs/demo_examples.md`](docs/demo_exa
 
 ```bash
 git clone https://github.com/ywqguenin/Temperance_football-analytics.git
-cd Temperance_football_analysis_ai_agent
+cd Temperance_football-analytics
 ```
 
 ### 2. Create and activate a virtual environment
@@ -188,7 +188,7 @@ python -m venv .venv
 ### 3. Install Python dependencies
 
 ```powershell
-python -m pip install pandas statsbombpy ollama pydantic pytest
+python -m pip install -r requirements.txt
 ```
 
 If the project adds or pins dependencies later, install them from its dependency file instead.
@@ -226,7 +226,7 @@ Run the automated test suite:
 python -m pytest -v
 ```
 
-The current suite contains eight passing tests.
+The current test suite contains 19 tests. Run `python -m pytest -v` to execute the suite.
 
 | Test group            | Coverage                                                            |
 | --------------------- | ------------------------------------------------------------------- |
